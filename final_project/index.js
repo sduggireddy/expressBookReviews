@@ -10,35 +10,21 @@ app.use(express.json());
 
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
-app.post("/login", (req, res) => {
-    const user = req.body.user;
-    if (!user) {
-        res.status(404).json({message: "Body Empty"});
-    }
-    //Generate JWT access token
-    let accessToken = jwt.sign({
-        data:user},
-        'access', { "expiresIn":60*60 });
-
-    req.session.authorization = {accessToken};
-    return res.status(200).send("User successfully logged in");
-});
-
 app.use("/customer/auth/*", function auth(req,res,next){
     //Write the authenication mechanism here
     if (req.session.authorization) {
         let token = req.session.authorization['accessToken'];
         //verify JWT token
-        jwt.verify(token, "access", (req, res) => {
+        jwt.verify(token, "access", (err, user) => {
             if (!err) {
                 req.user = user;// Set authenticated user data on the request object
                 next();
             } else {
-                return res.send(403).json({message: "User not authenticated"}) // Return error if token verification fails
+                return res.status(403).json({message: "User not authenticated"}) // Return error if token verification fails
             }
         })
     } else {
-        return res.send(403).json({message: "User not logged in."}) // Return error if token verification fails
+        return res.status(403).json({message: "User not logged in."}) // Return error if token verification fails
     }
 });
  
