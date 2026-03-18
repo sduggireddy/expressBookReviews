@@ -54,20 +54,21 @@ public_users.get('/isbn/:isbn', async function (req, res) {
  });
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  //Write your code here
+public_users.get('/author/:author', async function (req, res) {  
   let author = req.params.author;  
-  author = author.toLowerCase();  
-  if (author) {
-    const booksArray = Object.values(books);
-    const filtered_books = booksArray.filter((book) => book.author.toLowerCase() === author);
-    if (filtered_books.length) {
-        return res.status(200).send(JSON.stringify(filtered_books, null, 4));
-    } else {
-        return res.status(200).send(`Unable to find books with author ${author}`);
-    }    
-  } else {
-    return res.status(200).send("Author not specified");
+  author = author.toLowerCase(); 
+  try {
+    const filtered_books = await new Promise((resolve, reject) => {
+        try {
+            const booksArray = Object.values(books);
+            resolve(booksArray.filter((book) => book.author.toLowerCase() === author));
+        } catch (err) {
+            reject(err);
+        }
+    })
+    return res.status(200).send(JSON.stringify(filtered_books, null, 4));
+  } catch (err) {
+    res.status(500).json({ message: "Error retrieving book" });
   }  
 });
 
